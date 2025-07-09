@@ -2,30 +2,59 @@ import fs from 'fs';
 import path from 'path';
 
 export default function handler(req, res) {
-  // Chỉ cho phép domain cụ thể
-  const allowedOrigins = [
-    'https://tra-cuu-tinh-thanh.vercel.app'
-  ];
+  // FORCE NO CACHE
+  res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate, max-age=0');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
+  res.setHeader('Surrogate-Control', 'no-store');
   
-  const origin = req.headers.origin;
+  // Debug info
+  const timestamp = new Date().toISOString();
+  console.log(`[${timestamp}] Request from:`, {
+    origin: req.headers.origin,
+    referer: req.headers.referer,
+    userAgent: req.headers['user-agent'],
+    ip: req.headers['x-forwarded-for'] || req.connection.remoteAddress
+  });
+  
+  // STRICT BLOCKING
+  const allowedDomains = ['https://tra-cuu-tinh-thanh.vercel.app'];
   const referer = req.headers.referer;
+  const origin = req.headers.origin;
   
-  console.log('Origin:', origin); // Debug log
-  console.log('Referer:', referer); // Debug log
-  
-  // Kiểm tra origin
-  if (origin && !allowedOrigins.includes(origin)) {
-    console.log('Blocked origin:', origin);
-    return res.status(403).json({ error: 'Access denied: Invalid origin' });
+  // Block if no referer AND no origin
+  if (!referer && !origin) {
+    console.log('BLOCKED: No referer or origin');
+    return res.status(403).json({ 
+      error: 'Access Denied',
+      message: 'Direct access not allowed',
+      timestamp 
+    });
   }
   
-  // Kiểm tra referer
-  if (referer && !allowedOrigins.some(allowed => referer.startsWith(allowed))) {
-    console.log('Blocked referer:', referer);
-    return res.status(403).json({ error: 'Access denied: Invalid referer' });
+  // Block if referer exists but not from allowed domain
+  if (referer && !allowedDomains.some(domain => referer.startsWith(domain))) {
+    console.log('BLOCKED: Invalid referer:', referer);
+    return res.status(403).json({ 
+      error: 'Access Denied',
+      message: 'Invalid referer',
+      referer,
+      timestamp 
+    });
   }
   
-  // Chỉ thiết lập CORS cho domain được phép
+  // Block if origin exists but not allowed
+  if (origin && !allowedDomains.includes(origin)) {
+    console.log('BLOCKED: Invalid origin:', origin);
+    return res.status(403).json({ 
+      error: 'Access Denied',
+      message: 'Invalid origin',
+      origin,
+      timestamp 
+    });
+  }
+  
+  // Set CORS for allowed domain only
   res.setHeader('Access-Control-Allow-Origin', 'https://tra-cuu-tinh-thanh.vercel.app');
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
@@ -57,6 +86,7 @@ export default function handler(req, res) {
     const data = fs.readFileSync(filePath, 'utf8');
     const jsonData = JSON.parse(data);
     
+    console.log('ACCESS GRANTED for:', referer || origin);
     res.status(200).json(jsonData);
   } catch (error) {
     console.error('Error reading file:', error);
