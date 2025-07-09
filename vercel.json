@@ -18,15 +18,7 @@
         },
         { 
           "key": "Access-Control-Allow-Headers", 
-          "value": "Content-Type, Authorization, Referer" 
-        },
-        { 
-          "key": "Content-Type", 
-          "value": "application/json" 
-        },
-        {
-          "key": "Access-Control-Allow-Credentials",
-          "value": "true"
+          "value": "Content-Type" 
         }
       ]
     }
