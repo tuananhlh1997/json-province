@@ -1,7 +1,7 @@
 // crypto-utils.js - Utility functions cho client
 import CryptoJS from 'crypto-js';
 
-const SECRET_KEY = 'your-secret-key-here-change-this'; // Phải giống với server
+const SECRET_KEY = 'secretkey123'; // Phải giống với server
 
 // Hàm decrypt data
 export function decryptData(encryptedData) {
