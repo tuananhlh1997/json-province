@@ -1,19 +1,12 @@
+// api/provinces/[province].js - Server Code (Simple Base64)
 import fs from 'fs';
 import path from 'path';
 
-// Simple obfuscation function
-function simpleObfuscate(data) {
+// Simple Base64 encoding function
+function simpleBase64Encode(data) {
   const jsonString = JSON.stringify(data);
-  const encoded = Buffer.from(jsonString).toString('base64');
-  
-  // XOR với key đơn giản
-  const key = 'secretkey123';
-  const obfuscated = encoded.split('').map((char, index) => {
-    const keyChar = key[index % key.length];
-    return String.fromCharCode(char.charCodeAt(0) ^ keyChar.charCodeAt(0));
-  }).join('');
-  
-  return Buffer.from(obfuscated).toString('base64');
+  // Proper UTF-8 encoding for Vietnamese characters
+  return Buffer.from(jsonString, 'utf8').toString('base64');
 }
 
 export default function handler(req, res) {
@@ -52,10 +45,10 @@ export default function handler(req, res) {
   }
   
   // Set CORS
-res.setHeader('Access-Control-Allow-Origin', 'https://tra-cuu-tinh-thanh.vercel.app');
-res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
-res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-Token, X-Time'); // Add X-Token and X-Time
-res.setHeader('Content-Type', 'application/json');
+  res.setHeader('Access-Control-Allow-Origin', 'https://tra-cuu-tinh-thanh.vercel.app');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-Token, X-Time');
+  res.setHeader('Content-Type', 'application/json');
   
   if (req.method === 'OPTIONS') {
     res.status(200).end();
@@ -83,15 +76,16 @@ res.setHeader('Content-Type', 'application/json');
     const data = fs.readFileSync(filePath, 'utf8');
     const jsonData = JSON.parse(data);
     
-    // Obfuscate data
-    const obfuscatedData = simpleObfuscate(jsonData);
+    // Simple Base64 encode
+    const encodedData = simpleBase64Encode(jsonData);
     
     console.log('ACCESS GRANTED for:', referer || origin);
+    console.log('Data encoded successfully, length:', encodedData.length);
     
-    // Return obfuscated response
+    // Return encoded response
     res.status(200).json({
       status: 'ok',
-      payload: obfuscatedData,
+      payload: encodedData,
       ts: Date.now()
     });
     
